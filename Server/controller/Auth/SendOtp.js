@@ -39,7 +39,7 @@ exports.SendOtp = async (req, res) => {
         const otpBody = await OTP.create(OtpPlaylod);
         console.log('otp save in DB ', otpBody);
 
-        res.status(200).jason({
+        res.status(200).json({
             success : true,
             massage : 'OTP sent successfully',
         });
