@@ -3,11 +3,11 @@
 const express = require('express');
 const router = express.Router();
 
-const { updateProfile, deleteProfile, getAllUserDetails } = require('../controller/Profile/Profile');
+const  Profile  = require('../controller/Profile/Profile');
 
-router.put('/updateProfile', updateProfile);
-router.get('/showProfileDetails', getAllUserDetails);
-router.delete('/deleteProfile', deleteProfile);
+router.put('/updateProfile', Profile.updateProfile);
+router.get('/showProfileDetails', Profile.getAllUserDetails);
+router.delete('/deleteProfile', Profile.deleteProfile);
 
 
-module.exports = router
+module.exports = router;

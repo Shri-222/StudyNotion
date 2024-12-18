@@ -2,37 +2,37 @@
 const express = require('express');
 const router = express.Router();
 
-const { auth, student, professor, admin } = require('../middleware/auth');
+const Auth  = require('../middleware/auth');
 
-const {createCourse, getAllCourses} = require('../controller/Courses/Courses');
-const { createSection, updateSection, deleteSection} = require('../controller/Courses/Section');
-const { createsubSection, updateSubSection, deleteSubSection} = require('../controller//Courses/subSection');
+const  Courses  = require('../controller/Courses/Courses');
+const  Section = require('../controller/Courses/Section');
+const  subSection = require('../controller//Courses/subSection');
 
-const { createCategary, getAllCategary, categaryPage } = require('../controller/Categary/Categary');
+const  Categary  = require('../controller/Categary/Categary');
 
-const { createRatingAndReview, getAverageRating, getAllRatings} = require('../controller/RatingAndReview/RatingAndReview');
-
-
-router.post('/createCourse', auth, professor, createCourse);
-router.get('/getAllCourses', getAllCourses);
-
-router.post('/createSection',auth, professor, createSection);
-router.put('/updateSection',auth, professor, updateSection);
-router.delete('/deleteSection',auth, professor, deleteSection);
-
-router.post('createsubsection',auth, professor, createsubSection);
-router.put('/updateSubsection',auth, professor, updateSubSection);
-router.delete('/deleteSubsection',auth, professor, deleteSubSection);
+const  RatingAndReview  = require('../controller/RatingAndReview/RatingAndReview');
 
 
-router.post('/createCategary', auth, admin, createCategary);
-router.get('/showAllCategary',admin, getAllCategary);
-router.get('/getCategaryPages',admin, categaryPage);
+router.post('/createCourse', Auth.auth, Auth.professor, Courses.createCourse);
+router.get('/getAllCourses', Auth.professor, Courses.getAllCourses);
+
+router.post('/createSection', Auth.professor, Section.createSection);
+router.put('/updateSection', Auth.professor, Section.updateSection);
+router.delete('/deleteSection', Auth.professor, Section.deleteSection);
+
+router.post('createsubsection', Auth.professor,subSection.createsubSection);
+router.put('/updateSubsection', Auth.professor, subSection.updateSubSection);
+router.delete('/deleteSubsection',Auth.professor, subSection.deleteSubSection);
 
 
-router.post('/createRating',auth, student, createRatingAndReview);
-router.get('/showAvarageRating', student, getAverageRating);
-router.get('/showAllReview', student, getAllCategary);
+router.post('/createCategary', Auth.admin, Categary.createCategary);
+router.get('/showAllCategary',Auth.admin, Categary.getAllCategary);
+router.get('/getCategaryPages',Auth.admin, Categary.categaryPage);
+
+
+router.post('/createRating', Auth.student, RatingAndReview.createRatingAndReview);
+router.get('/showAvarageRating', Auth.student, RatingAndReview.getAverageRating);
+router.get('/showAllReview', Auth.student, RatingAndReview.getAllRatings);
 
 
 module.exports = router;
