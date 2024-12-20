@@ -29,9 +29,7 @@ exports.login = async (req, res) => {
 
             const user = await User.findOne({email});
 
-            const string_id = JSON.stringify(user._id);
-
-            console.log('This is a new user ID :-', string_id);
+            console.log('This is a new user ID :-', user._id);
 
             if (!user) {
                 return res.status(404).json(
@@ -48,11 +46,11 @@ exports.login = async (req, res) => {
 
                 const plyload = {
                     email : user.email,
-                    Id : string_id,
+                    Id : user._id,
                     accountType : user.accountType, 
                 }
                 const token = jwt.sign(plyload, process.env.JET_SECRET || 'BARSERK', {
-                        expiresIn : '2h',
+                        expiresIn : '5h',
 
                 });
 

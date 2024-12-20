@@ -95,7 +95,7 @@ exports.signup = async (req, res) => {
                 password :  hashPassword,
                 accountType : accountType,
                 contactNumber : contactNumber,
-                profile : profileDetails._id,
+                additionalDetails : profileDetails._id,
                 // image : `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`,
                 image : `https://api.dicebear.com/9.x/lorelei/svg?seed=${firstName}${lastName}`,
             }

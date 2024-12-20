@@ -33,15 +33,19 @@ exports.forgetPasswordToken = async (req, res) => {
 
 
         const token = crypto.randomUUID();
+        console.log("this is Token " ,  token);
 
         const updatedDetails = await User.findOneAndUpdate(
             { email },
-            { 
+            { $push : {
                 resetPasswordToken: token, 
                 resetPasswordExpires: Date.now() + 10 * 60 * 1000      // 10 minutes
+                } 
             }, 
             { new: true }
         );
+
+        console.log("This is token base user :-", updatedDetails);
 
 
         const frontEndLink = `https://localhost:3000/ForgotPassword/${token}`;
@@ -113,6 +117,7 @@ exports.forgetPassword = async (req, res) => {
 
 
         const userDetails = await User.findOne({resetPasswordToken : token});
+        console.log("this is user Detais :-", userDetails)
 
         if ( !userDetails ) {
             return res.status(400).json(
