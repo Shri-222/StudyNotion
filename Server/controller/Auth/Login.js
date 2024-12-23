@@ -50,7 +50,7 @@ exports.login = async (req, res) => {
                     accountType : user.accountType, 
                 }
                 const token = jwt.sign(plyload, process.env.JET_SECRET || 'BARSERK', {
-                        expiresIn : '5h',
+                        expiresIn : '999h',
 
                 });
 
