@@ -64,7 +64,10 @@ exports.student = async (req, res, next) => {
 
     try {
 
-        if (req.user.accountType !== 'Student') {
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userAccount = plyload.accountType;
+
+        if ( userAccount !== 'Student') {
             return res.status(403).json(
                 {
                     success : false,
@@ -96,7 +99,10 @@ exports.professor = async (req, res, next) => {
 
     try {
 
-        if (req.user.accountType!== 'professor') {
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userAccount = plyload.accountType;
+
+        if ( userAccount !== 'professor') {
             return res.status(403).json(
                 {
                     success : false,
@@ -129,7 +135,12 @@ exports.admin = async (req, res, next) => {
 
     try {
 
-        if (req.user.accountType !== 'Admin') {
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userAccount = plyload.accountType;
+
+        console.log(userAccount);
+
+        if ( userAccount !== 'Admin') {
             return res.status(403).json(
                 {
                     success : false,
