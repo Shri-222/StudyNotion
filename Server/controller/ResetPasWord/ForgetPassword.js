@@ -33,15 +33,18 @@ exports.forgetPasswordToken = async (req, res) => {
 
 
         const token = crypto.randomUUID();
+        console.log("this is Token " ,  token);
 
         const updatedDetails = await User.findOneAndUpdate(
-            { email },
+            { email : email },
             { 
-                resetPasswordToken: token, 
-                resetPasswordExpires: Date.now() + 10 * 60 * 1000      // 10 minutes
+                changePasswordToken: token, 
+                changePasswordExpires: Date.now() + 10 * 60 * 1000      // 10 minutes
             }, 
-            { new: true }
+            { new : true }
         );
+
+        console.log("This is token base user :-", updatedDetails);
 
 
         const frontEndLink = `https://localhost:3000/ForgotPassword/${token}`;
@@ -112,7 +115,8 @@ exports.forgetPassword = async (req, res) => {
         }
 
 
-        const userDetails = await User.findOne({resetPasswordToken : token});
+        const userDetails = await User.findOne({changePasswordToken : token});
+        console.log("this is user Detais :-", userDetails)
 
         if ( !userDetails ) {
             return res.status(400).json(
@@ -133,10 +137,10 @@ exports.forgetPassword = async (req, res) => {
         }
 
 
-        const hashPassword = bcrypt.hash(password, 10); 
+        const hashPassword = await bcrypt.hash(password, 10); 
 
-        await User.findOneAndUpdate(
-            { resetPasswordToken : token },
+        const updatedUser = await User.findOneAndUpdate(
+            { changePasswordToken : token },
             { password : hashPassword },
             { new : true },
         );
@@ -152,7 +156,8 @@ exports.forgetPassword = async (req, res) => {
         res.status(200).json(
             {
                 success : true,
-                message : 'Password has been successfully changed'
+                message : 'Password has been successfully changed',
+                data : updatedUser
             }
         );
 

@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema ({
 
     confirmPassword: {
         type : String,
-        required : true,
+        // required : true,
         trim : true,
         // match : /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
     },
@@ -51,8 +51,8 @@ const userSchema = new mongoose.Schema ({
 
     additionalDetails : {
         type : mongoose.Schema.Types.ObjectId,
-        required : true,
-        ref : 'Profile',
+        // required : true,
+        ref : 'ProfileSchema',
     },
 
     courses : [{

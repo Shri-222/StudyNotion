@@ -10,7 +10,7 @@ const User = require('../../model/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const Cookies = require('cookie-parser');
+const cookie = require('cookie-parser');
 
 exports.login = async (req, res) => {
     
@@ -29,6 +29,8 @@ exports.login = async (req, res) => {
 
             const user = await User.findOne({email});
 
+            console.log('This is a new user ID :-', user._id);
+
             if (!user) {
                 return res.status(404).json(
                     {
@@ -38,16 +40,17 @@ exports.login = async (req, res) => {
                 );
             }
 
+            console.log(" JWT Secret :- ", process.env.JET_SECRET);
 
             if (await bcrypt.compare(password, user.password)) {
 
                 const plyload = {
                     email : user.email,
-                    id : user._id,
+                    Id : user._id,
                     accountType : user.accountType, 
                 }
-                const token = jwt.sign(plyload, process.env.JET_SECRET, {
-                        expiresIn : '2h',
+                const token = jwt.sign(plyload, process.env.JET_SECRET || 'BARSERK', {
+                        expiresIn : '999h',
 
                 });
 
@@ -59,12 +62,12 @@ exports.login = async (req, res) => {
                     httpOnly : true,
                 }
 
-                res.Cookies('token', token, option).status(200).json(
+                res.cookie('token', token, option).status(200).json(
                     {
                         success : true,
                         massege : 'User Logged In successfully',
-                        token,
-                        user,
+                        Token : token,
+                        Data : user,
                     }
                 );
             }

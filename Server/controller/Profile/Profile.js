@@ -11,7 +11,8 @@
 const User = require('../../model/User');
 const Profile = require('../../model/Profile');
 const Course = require('../../model/Course');
-const { default: mongoose } = require('mongoose');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 exports.updateProfile = async (req, res) => {
 
@@ -19,11 +20,15 @@ exports.updateProfile = async (req, res) => {
 
         const { gender, dateOfBirth, contactNumber, about } = req.body;
 
-        const userID = req.user.id;
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userID = plyload.Id;
 
-        const userDetails = await User.findById(userID);
-        const profileID = await userDetails.additionalDetails;
-        const profileDetails = await Profile.findById(profileID);
+        console.log('This is UserID', userID);
+
+        const userDetails = await User.findById( {_id : userID}); 
+
+        const profileDetails = await Profile.findById(userDetails.additionalDetails);
+
 
         profileDetails.gender = gender;
         profileDetails.dateOfBirth = dateOfBirth;
@@ -36,6 +41,7 @@ exports.updateProfile = async (req, res) => {
             {
                 success : true,
                 massage : ' Profile Updated Successfully',
+                data : profileDetails
             }
         )
         
@@ -112,9 +118,13 @@ exports.getAllUserDetails = async ( req, res ) => {
 
     try {
 
-        const ID = req.user.id;
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userID = plyload.Id;
 
-        const profile = await User.findById(ID).populate('additionalDetails').exec();
+        console.log(userID)
+
+        const profile = await User.findById(userID).populate('additionalDetails').exec();
+        console.log(profile)
 
         if (!profile ) {
             

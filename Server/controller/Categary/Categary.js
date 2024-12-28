@@ -22,8 +22,8 @@ exports.createCategary = async (req, res) => {
         
         const newTags = await Categary.create(
             {
-                Name : name,
-                Discription : Description,
+                name : name,
+                discription : Description,
             }
         );
 
@@ -84,6 +84,7 @@ exports.categaryPage = async (req, res) => {
 
         // find the data or courses by category id
             const catagaryDetails = await Categary.findById(catagaryId).populate('courses').exec();
+            console.log(catagaryDetails);
 
         // validate the data
             if( !catagaryDetails ) {
