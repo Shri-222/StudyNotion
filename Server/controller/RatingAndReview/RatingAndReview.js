@@ -2,7 +2,7 @@
 const Rating = require('../../model/RatingAndRewive');
 const Course = require('../../model/Course');
 const User = require('../../model/User');
-const { Mongoose, default: mongoose } = require('mongoose');
+const mongoose = require('mongoose');
 
 // 1 - create the Rating and Review 
 
@@ -15,8 +15,16 @@ exports.createRatingAndReview = async (req, res) => {
         // fetch data from req body 
             const { courseId, rating, review } = req.body;
 
+        if (!courseId || !rating) {
+            return res.status(400).json({ success: false, message: 'Course ID and rating are required.' });
+        }
+
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5.' });
+        }
+
         // check if user is not enroll to this course
-            const courseDetails = await Course.findById({_id : userId, studentEnroll : {$elemMatch : { $eq : userId }}});
+            const courseDetails = await Course.findById({_id : courseId, studentEnroll : {$elemMatch : { $eq : userId }}});
 
             if(!courseDetails) {
                 return res.status(401).json({
@@ -38,31 +46,23 @@ exports.createRatingAndReview = async (req, res) => {
                 });
             }
 
-        // // validation
-          /*  if(rating < 1 || rating > 5) {
-                return res.status(400).json({
-                    success : false,
-                    message : 'Rating should be between 1 and 5',
-                });
-            }*/
-
         // create entry in db
             const newRatingAndReview = await Rating.create({
-                userId : userId,
-                courseId : courseId,
-                rating : rating,
-                review : review,
+                userId,
+                courseId,
+                rating,
+                review,
             });
 
 
-            const updateCourse = await Course.findOneAndUpdate( {_id : courseId }, 
+            const updateCourse = await Course.findOneAndUpdate( courseId , 
                                                                 { $push : { 
                                                                     ratings : newRatingAndReview._id
                                                                 } },
                                                                 { new : true }              
                                                                 );
 
-            console.log('updateCourse - ', updateCourse);
+            // console.log('updateCourse - ', updateCourse);
 
         // return response
         return res.status(201).json({
@@ -82,38 +82,43 @@ exports.createRatingAndReview = async (req, res) => {
     }
 }
 
-
 // 2 - Avarage rating 
 
 exports.getAverageRating = async (req, res) => {
 
     try {
 
-        const courseId = req.body.courseId;
+        const {courseId} = req.body;
+
+        if (!courseId) {
+            return res.status(400).json({ success: false, message: 'Course ID is required.' });
+        }
 
         // genarate Average rating
 
-        const averageRating = await Rating.aggregate(
+        const result = await Rating.aggregate(
             {
                 $match : { 
-                    course : courseId,
+                    courseId : new mongoose.Types.ObjectId(courseId),
                  }
             },
             {
                 $group : {
                     _id : null,
-                    averageRating : { $avg : '$ratings.rating' }
+                    averageRating : { $avg : '$rating' }
                 }
             }
         );
 
+        const averageRating = result.length > 0 ? result[0].averageRating : 0;
+        
         console.log('Average Rating - ', averageRating);
 
         // return respons
         return res.status(200).json({
             success : true,
             message : 'Average Rating fetched Successfully',
-            averageRating : averageRating[0].averageRating,
+            averageRating 
         });
 
     } catch (error) {
@@ -132,21 +137,22 @@ exports.getAllRatings = async (req, res) => {
 
     try {
 
-        const courseId = req.body.courseId;
+        const {courseId} = req.body;
+
+        if (!courseId) {
+            return res.status(400).json({ success: false, message: 'Course ID is required.' });
+        }
 
         // fetch all ratings
 
-        const allRatings = await Rating.find({ course : courseId })
-                                                .sort(ratingAcndRewivw = 'descending')
+        const allRatings = await Rating.find({ courseId })
+                                                .sort({ createdAt : -1 })
                                                 .populate({
-                                                    path : 'ratingAcndRewivw',
-                                                     populate : {
-                                                         path : 'userId',
-                                                         select : 'FirstName, LastName, image'
-                                                        }
+                                                    path : 'userId',
+                                                    select : 'FirstName, LastName, image'
                                                 }).exec()
 
-        console.log('All Ratings - ', allRatings);
+        // console.log('All Ratings - ', allRatings);
 
         // return response
         return res.status(200).json({

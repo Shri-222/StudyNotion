@@ -1,32 +1,30 @@
 const mongoose = require('mongoose');
 
-const ratingAndRewiveShcemas = new mongoose.Schema({
+const ratingAndReviewSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
 
-    user : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : 'User',
-        required : true,
-    },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5, // restrict rating to 1–5
+  },
 
-    rating : {
-        type : Number,
-        required : true,
-    },
+  review: {
+    type: String,
+    trim: true,
+    default: '', // make optional
+  },
 
-    review : {
-        type : String,
-        required : true,
-        trim : true,
-    },
-
-    course : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : 'Course',
-        required : true,
-        trim : true,
-    },
-
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+    required: true,
+  },
 });
 
-
-module.exports = mongoose.model('RatingAndRewivew', ratingAndRewiveShcemas);
+module.exports = mongoose.model('RatingAndReview', ratingAndReviewSchema);

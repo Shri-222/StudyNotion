@@ -1,12 +1,4 @@
 
-// Authorization face
-// Extract Token
-// If Token is missing then retyrn respons
-
-// Verifi Token
-
-
-const User = require('../model/User');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -14,13 +6,13 @@ exports.auth = async (req, res, next) => {
 
     try {
 
-        const token = req.cookies.token || req.body.token || req.header("Authorization").replace('Bearer ', "");
+        const token = req.cookies.token || req.body.token || (req.header('Authorization') ? req.header('Authorization').replace('Bearer ', "") : null);
         
         if (!token) {
-            return res.status(403).json(
+            return res.status(401).json(
                 {
                     success : false,
-                    massege : "Token is Missing",
+                    massage : "Token is Missing",
                 }
             );
         }
@@ -29,136 +21,153 @@ exports.auth = async (req, res, next) => {
         try {
             
             const decode = jwt.verify(token, process.env.JWT_SECRET);
-            console.log(decode);
             req.user = decode;
+            next();
 
         } catch (error) {
             console.log("Error While Verifing Token",error);
             res.status(404).json(
                 {
                     success : false,
-                    massege : 'Token is Invalid'
+                    massage : 'Token is Invalid'
                 }
             );
             
         }
-
-        next();
-
         
     } catch (error) {
         return res.status(403).json(
             {
                 success : false,
-                massege : 'Something went wrong while Authentication'
+                massage : 'Something went wrong while Authentication'
             }
         );
     }
 }
 
+// Role-Based Authorization Middleware
 
+exports.roleBasedAuthorization = ( ...allowedRoles ) => {
+    return ( req, res, next ) => {
+        try {
+            if ( !req.user || !allowedRoles.includes(req.user.accountType) ) {
+                return res.status(403).json({
+                    success : false,
+                    massage : 'You are not authorized to access this resource'
+                })
+            }
+            next();
+        } catch (error) {
+            console.error('Role Authorization Error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Role validation failed.',
+            });
+        }
+    };
+};
+
+
+exports.professor = exports.roleBasedAuthorization('Professor');
+exports.admin = exports.roleBasedAuthorization('Admin');
+exports.student = exports.roleBasedAuthorization('Student');
 
 // Student Authorization 
 
-exports.student = async (req, res, next) => {
+// exports.student = async (req, res, next) => {
 
-    try {
+//     try {
 
-        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-        const userAccount = plyload.accountType;
+//         const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+//         const userAccount = plyload.accountType;
 
-        if ( userAccount !== 'Student') {
-            return res.status(403).json(
-                {
-                    success : false,
-                    massege : 'You are not authorized to access this resource'
-                }
-            );
-        }
+//         if ( userAccount !== 'Student') {
+//             return res.status(403).json(
+//                 {
+//                     success : false,
+//                     massege : 'You are not authorized to access this resource'
+//                 }
+//             );
+//         }
 
-        next();
+//         next();
         
-    } catch (error) {
+//     } catch (error) {
         
-        console.log("Error While Verifing Student Token", error);
-        res.status(404).json(
-            {
-                success : false,
-                massege : 'Student Token is Invalid'
-            }
-        );
+//         console.log("Error While Verifing Student Token", error);
+//         res.status(404).json(
+//             {
+//                 success : false,
+//                 massege : 'Student Token is Invalid'
+//             }
+//         );
 
-    }
-}
+//     }
+// }
 
+// // Professor Authorization 
 
+// exports.professor = async (req, res, next) => {
 
-// Professor Authorization 
+//     try {
 
-exports.professor = async (req, res, next) => {
+//         const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+//         const userAccount = plyload.accountType;
 
-    try {
-
-        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-        const userAccount = plyload.accountType;
-
-        if ( userAccount !== 'professor') {
-            return res.status(403).json(
-                {
-                    success : false,
-                    massege : 'You are not authorized to access this resource'
-                }
-            );
-        }
+//         if ( userAccount !== 'professor') {
+//             return res.status(403).json(
+//                 {
+//                     success : false,
+//                     massege : 'You are not authorized to access this resource'
+//                 }
+//             );
+//         }
         
-        next();
+//         next();
 
-    } catch (error) {
+//     } catch (error) {
         
-        console.log("Error While Verifing professor Token", error);
-        res.status(404).json(
-            {
-                success : false,
-                massege : 'Processor Token is Invalid'
-            }
-        );
+//         console.log("Error While Verifing professor Token", error);
+//         res.status(404).json(
+//             {
+//                 success : false,
+//                 massege : 'Processor Token is Invalid'
+//             }
+//         );
         
-    }
-}
+//     }
+// }
 
+// // Admin Authorization
 
+// exports.admin = async (req, res, next) => {
 
+//     try {
 
-// Admin Authorization
+//         const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+//         const userAccount = plyload.accountType;
 
-exports.admin = async (req, res, next) => {
+//         console.log(userAccount);
 
-    try {
+//         if ( userAccount !== 'Admin') {
+//             return res.status(403).json(
+//                 {
+//                     success : false,
+//                     massege : 'You are not authorized to access this resource'
+//                 }
+//             );
+//         }
 
-        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-        const userAccount = plyload.accountType;
-
-        console.log(userAccount);
-
-        if ( userAccount !== 'Admin') {
-            return res.status(403).json(
-                {
-                    success : false,
-                    massege : 'You are not authorized to access this resource'
-                }
-            );
-        }
-
-        next();
+//         next();
         
-    } catch (error) {
+//     } catch (error) {
         
-        console.log("Error While Verifing Admin Token", error);
-        res.status(404).json(
-            {
-                success : false,
-                massege : 'Admin Token is Invalid'
-            }
-        );
-    }
-}
+//         console.log("Error While Verifing Admin Token", error);
+//         res.status(404).json(
+//             {
+//                 success : false,
+//                 massege : 'Admin Token is Invalid'
+//             }
+//         );
+//     }
+// }

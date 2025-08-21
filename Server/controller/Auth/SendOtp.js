@@ -1,11 +1,3 @@
-//Feach Email from Requist Body
-//Check User Already Existed or Login
-//if User already exists then return respond
-//Generate OTP
-//Create Playlode 
-// Create Entry in DB
-// Return Respons
-
 
 const User = require('../../model/User');
 const OTP = require('../../model/OTP');
@@ -22,11 +14,12 @@ exports.SendOtp = async (req, res) => {
         if(checkUserExisted) {
             return res.status(400).jason({
                 success : false,
-                massage : 'User Already Existed'
+                massage : 'User Already Existed. Please log in.'
             });
         }
 
         var otp = GenerateOtp.generate(6, {
+            digits : true,
             upperCaseAlphabets : false,
             lowerCaseAlphabets : false,
             specialChars : false,
@@ -34,9 +27,9 @@ exports.SendOtp = async (req, res) => {
 
         console.log('OTP :- ', otp);
 
-        const OtpPlaylod = {email , otp};
+        const OtpPayload = {email , otp};
 
-        const otpBody = await OTP.create(OtpPlaylod);
+        const otpBody = await OTP.create(OtpPayload);
         console.log('otp save in DB ', otpBody);
 
         res.status(200).json({

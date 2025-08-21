@@ -1,25 +1,26 @@
 const mongoose = require('mongoose');
 
 const profileSchema = new mongoose.Schema({
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Other'],
+    default: 'Other',
+  },
 
-    gender : {
-        type : String,
-        enum : ['Male', 'Female', 'Other']
-    },
+  dateOfBirth: {
+    type: Date, // Use Date type for proper queries
+  },
 
-    dateOfBirth : {
-        type : String,   
-    },
+  about: {
+    type: String,
+    trim: true,
+    default: '',
+  },
 
-    about : {
-        type : String,
-        trim : true,
-    },
-
-    contactNumber : {
-        type : Number,
-        trim : true,
-    }
+  contactNumber: {
+    type: String, // String to support international formats
+    trim: true,
+  },
 });
 
-module.exports = mongoose.model('ProfileSchema', profileSchema);
+module.exports = mongoose.model('Profile', profileSchema);

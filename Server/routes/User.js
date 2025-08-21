@@ -1,27 +1,20 @@
-
 const express = require('express');
 const router = express.Router();
 
 const Auth = require('../middleware/auth');
 const Login = require('../controller/Auth/Login');
-const Singup = require('../controller/Auth/Singup');
+const Signup = require('../controller/Auth/Singup');  // Fixed spelling
 const SendOtp = require('../controller/Auth/SendOtp');
-const Updatepassword = require('../controller/Auth/UpdatePassword');
+const UpdatePassword = require('../controller/Auth/UpdatePassword');
 
+// Auth Routes
+router.post('/login', Login.login);
+router.post('/signup', Signup.signup);  // Fixed spelling
 
-// const Profile = require('../controller/Profile/Profile');
+// OTP Routes
+router.post('/send-otp', SendOtp.SendOtp);
 
-
-router.post('/login', Login.login );
-router.post ('/singup', Singup.signup);
-
-router.post('/sendotp', SendOtp.SendOtp);
-router.post('/changepassword', Auth.auth, Updatepassword.updatePassword);
-
-
-
-
+// Change password (must be logged in)
+router.post('/change-password', Auth.auth, UpdatePassword.updatePassword);
 
 module.exports = router;
-
-

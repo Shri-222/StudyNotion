@@ -1,16 +1,8 @@
-// 1 - Reset Password Token
-
-// feach Data from req Body 
-// validation and Chack User Exist or not
-// Genarate Token using crypto and save into users Database 
-
-// share the FrontEnd Link by mailSender 
-// return response
-
 
 const User = require('../../model/User');
 const mailSender = require('../../utils/MailSender');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 
 exports.forgetPasswordToken = async (req, res) => {
@@ -18,6 +10,10 @@ exports.forgetPasswordToken = async (req, res) => {
     try {
 
         const { email } = req.body;
+
+         if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
 
         const user = await User.findOne({ email });
 
@@ -30,13 +26,12 @@ exports.forgetPasswordToken = async (req, res) => {
             );
         }
 
-
-
         const token = crypto.randomUUID();
-        console.log("this is Token " ,  token);
+
+        // console.log("this is Token " ,  token);
 
         const updatedDetails = await User.findOneAndUpdate(
-            { email : email },
+            { email },
             { 
                 changePasswordToken: token, 
                 changePasswordExpires: Date.now() + 10 * 60 * 1000      // 10 minutes
@@ -44,15 +39,17 @@ exports.forgetPasswordToken = async (req, res) => {
             { new : true }
         );
 
-        console.log("This is token base user :-", updatedDetails);
+        // console.log("This is token base user :-", updatedDetails);
 
 
-        const frontEndLink = `https://localhost:3000/ForgotPassword/${token}`;
+        const frontEndLink = process.env.CLIENT_URL || 'http://localhost:3000';
+        const resetLink = `${frontEndLink}/reset-password/${token}`;
 
         await mailSender(
             email, 
             'Yor Reset Password Link',
-            `Your Reset Password Link:-  ${frontEndLink}   Link Will be Close after 10 minutes`,
+            `<p> Click the following link to reset your password:</p>
+                <a href= "${process.env.CLIENT_URL}/reset-password/${token}". This link will expire in 10 minutes. </a>`,
         );
 
 
@@ -94,9 +91,14 @@ exports.forgetPassword = async (req, res) => {
 
     try {
 
-        const { token, password, comfirmPassword } = req.body;
+        const { token, password, confirmPassword } = req.body;
 
-        if ( !password || !comfirmPassword ) {
+        
+        if (!token) {
+            return res.status(400).json({ success: false, message: 'Reset token is required' });
+        }
+
+        if ( !password || !confirmPassword ) {
             return res.status(400).json(
                 {
                     success : false,
@@ -105,7 +107,7 @@ exports.forgetPassword = async (req, res) => {
             );
         } 
 
-        if ( password !== comfirmPassword ) {
+        if ( password !== confirmPassword ) {
             return res.status(400).json(
                 {
                     success : false,
@@ -116,40 +118,41 @@ exports.forgetPassword = async (req, res) => {
 
 
         const userDetails = await User.findOne({changePasswordToken : token});
-        console.log("this is user Detais :-", userDetails)
+        // console.log("this is user Details :-", userDetails)
 
         if ( !userDetails ) {
             return res.status(400).json(
                 {
                     success : false,
-                    massage : 'Invalid Token'
+                    massage : 'Invalid or expired Token'
                 }
             );
         }
 
-        if ( userDetails.resetPasswordExpires < Date.now() ) {
+        if ( userDetails.changePasswordExpires < Date.now() ) {
             return res.status(400).json(
                 {
                     success : false,
-                    massage : 'Token is Expired'
+                    massage : 'Reset Token has Expired'
                 }
             );
         }
 
 
-        const hashPassword = await bcrypt.hash(password, 10); 
+        const hashedPassword = await bcrypt.hash(password, 10); 
 
-        const updatedUser = await User.findOneAndUpdate(
-            { changePasswordToken : token },
-            { password : hashPassword },
-            { new : true },
-        );
+        console.log("this is hashed Password :-", hashedPassword);
+
+        userDetails.password = hashedPassword;
+        userDetails.changePasswordToken = null;
+        userDetails.changePasswordExpires = null;
+        await userDetails.save();
 
 
         await mailSender(
             userDetails.email,
-            'Successfully Chenged Password',
-            'Your StudyNotion Password has been successfully changed ',
+            'Successfully Changed Password',
+            'Your StudyNotion Password has been successfully Updated. ',
         );
 
 
@@ -157,7 +160,7 @@ exports.forgetPassword = async (req, res) => {
             {
                 success : true,
                 message : 'Password has been successfully changed',
-                data : updatedUser
+                // data : updatedUser
             }
         );
 
