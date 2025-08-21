@@ -20,7 +20,11 @@ exports.createCategary = async (req, res) => {
         const newCategory = await Categary.create(
             {
                 name : name,
+<<<<<<< HEAD
+                discription : Description,
+=======
                 description
+>>>>>>> recovery-backup
             }
         );
 

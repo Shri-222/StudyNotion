@@ -78,8 +78,22 @@ exports.student = exports.roleBasedAuthorization('Student');
 
 //     try {
 
+<<<<<<< HEAD
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userAccount = plyload.accountType;
+
+        if ( userAccount !== 'Student') {
+            return res.status(403).json(
+                {
+                    success : false,
+                    massege : 'You are not authorized to access this resource'
+                }
+            );
+        }
+=======
 //         const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
 //         const userAccount = plyload.accountType;
+>>>>>>> recovery-backup
 
 //         if ( userAccount !== 'Student') {
 //             return res.status(403).json(
@@ -114,6 +128,21 @@ exports.student = exports.roleBasedAuthorization('Student');
 //         const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
 //         const userAccount = plyload.accountType;
 
+<<<<<<< HEAD
+    try {
+
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userAccount = plyload.accountType;
+
+        if ( userAccount !== 'professor') {
+            return res.status(403).json(
+                {
+                    success : false,
+                    massege : 'You are not authorized to access this resource'
+                }
+            );
+        }
+=======
 //         if ( userAccount !== 'professor') {
 //             return res.status(403).json(
 //                 {
@@ -122,6 +151,7 @@ exports.student = exports.roleBasedAuthorization('Student');
 //                 }
 //             );
 //         }
+>>>>>>> recovery-backup
         
 //         next();
 
@@ -158,7 +188,25 @@ exports.student = exports.roleBasedAuthorization('Student');
 //             );
 //         }
 
+<<<<<<< HEAD
+        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userAccount = plyload.accountType;
+
+        console.log(userAccount);
+
+        if ( userAccount !== 'Admin') {
+            return res.status(403).json(
+                {
+                    success : false,
+                    massege : 'You are not authorized to access this resource'
+                }
+            );
+        }
+
+        next();
+=======
 //         next();
+>>>>>>> recovery-backup
         
 //     } catch (error) {
         
