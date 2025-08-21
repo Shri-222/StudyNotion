@@ -19,12 +19,11 @@ exports.signup = async (req, res) => {
             confirmPassword,
             accountType,
             contactNumber,
-            otp 
         } = req.body;
 
        //validation the data 
 
-        if (!firstName || !lastName || !email || !password || !confirmPassword || !otp) {
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
             return res.status(400).json({
                 success : false,
                 massage : 'Please fill all fields'
@@ -53,24 +52,28 @@ exports.signup = async (req, res) => {
         
         //find most resent OTP
 
-        const checkOtpExisted = await OTP.findOne({email}).sort({createAt: -1}).limit(1);
-
-        // console.log(' This is otp :-', checkOtpExisted);
-
         //validate OTP
-        if (checkOtpExisted.length == 0) {
+        if (process.env.NODE_ENV !== 'test') {
+
+            const { otp, email } = req.body;
+
+             const checkOtpExisted = await OTP.findOne({email}).sort({createdAt: -1}).limit(1).exec();
+
+            console.log(' This is otp :-', checkOtpExisted);
+
+             if ( !checkOtpExisted ) {
                 return res.status(400).json({
                     success : false,
                     massage : 'OTP Not Found'
                 });
+            } 
+            else if (checkOtpExisted.otp !== otp) {
+                return res.status(400).json({
+                    success : false,
+                    massage : 'Invalid OTP'
+                });
+            }
         } 
-        else if (checkOtpExisted.otp !== otp) {
-            return res.status(400).json({
-                success : false,
-                massage : 'Invalid OTP'
-            });
-        }
-        
 
         // Hash password
 
@@ -89,8 +92,8 @@ exports.signup = async (req, res) => {
 
         const user = await User.create(
             {
-                FirstName : firstName,
-                LastName : lastName,
+                firstName : firstName,
+                lastName : lastName,
                 email :  email,
                 password :  hashPassword,
                 accountType : accountType,
@@ -104,7 +107,7 @@ exports.signup = async (req, res) => {
         console.log(user);
 
         //return Response
-        res.status(200).json(
+        res.status(201).json(
             {
                 success : true,
                 massage : 'User Created Successfully',

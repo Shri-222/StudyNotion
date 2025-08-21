@@ -1,23 +1,16 @@
-// 1 - Create a new Course Handler
-
-// fetch data from req body
-// fetch Thumbnail from req files 
-// validation
-// check for professor 
-// check given tags is valide or not
-// uplode image to cloudinary to save 
-// create an entry for new course
-// add the new course to the user schemas of professor
-// update the Tages schemas
-// return response
 
 const Course = require('../../model/Course');
 const uplodeImageToCloudinary = require('../../utils/ImageUplodeCloudenary');
 const Categary = require('../../model/Categary');
 const User = require('../../model/User');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 exports.createCourse = async (req, res) => {
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         
         const { courseName, courseDescription, whatYouWillLearn, price, tag } = req.body;    // in the tags we get the tag ID
@@ -37,10 +30,10 @@ exports.createCourse = async (req, res) => {
         const professorDetails = await User.findById(userId);
         console.log('Professor Details :- ', professorDetails);
 
-        if ( !professorDetails ) {
-            return res.status(401).json({
+        if ( !professorDetails || professorDetails.accountType !== 'instructor' ) {
+            return res.status(403).json({
                 success : false,
-                message : 'Unauthorized, You are not a Professor',
+                message : 'Only instructors can create courses.',
             });
         }
 
@@ -55,8 +48,12 @@ exports.createCourse = async (req, res) => {
 
         const imageUplode = await uplodeImageToCloudinary(Thumbnail, process.env.CLOUDENARY_FOLDER);
 
+         if (!imageUplode || !imageUplode.secure_url) {
+            throw new Error('Thumbnail upload failed.');
+        }
+
         const newCourse = await Course.create(
-            {
+            [{
                 courseName : courseName,
                 courseDescription : courseDescription,
                 whatYouWillLearn : whatYouWillLearn,
@@ -64,7 +61,8 @@ exports.createCourse = async (req, res) => {
                 thumbnail : imageUplode.secure_url,
                 professor : professorDetails._id,
                 Tag : givenTags._id
-            }
+            }],
+            { session: session }
         );
 
 
@@ -73,11 +71,10 @@ exports.createCourse = async (req, res) => {
 
             {
                 $push :
-                {
-                    courses : newCourse._id
-                }
+                { courses : newCourse[0]._id }
             },
 
+            { session },
             { new : true}
 
         );
@@ -91,16 +88,18 @@ exports.createCourse = async (req, res) => {
                     courses : newCourse._id
                 }
             },
-
+            { session },
             { new : true}
         );
+
+        await session.commitTransaction();
 
 
         return res.status(200).json(
             {
                 success : true,
                 message : 'Course Created Successfully',
-                course : newCourse,
+                course : newCourse[0],
                 professor : professorDetails,
                 // tag : givenTags,
                 // thumbnail : imageUplode.secure_url,
@@ -110,37 +109,43 @@ exports.createCourse = async (req, res) => {
 
 
     } catch (error) {
-        
+        await session.abortTransaction();
         console.log('Error While Creating Course', error);
         return res.status(500).json({
             success : false,
             message : 'Error While Creating Course, Please try again Leater',
         });
-    }
+    } finally {
+        session.endSession();
+  }
 }
-
-
 
 // 2 - Get All Courses 
 
 exports.getAllCourses = async (req, res) => {
 
     try {
+        const { page = 1, limit = 20 } = req.query;
 
         const allCourses = await Course.find({}, {
                                                   courseName : true,
                                                   price : true,
                                                   Thumbnail : true,
                                                   professor : true,
-                                                  ratingAcndRewivw : true,
+                                                  ratingAndReview : true,
                                                   studentEnroll : true
-                                                }).populate('professor').exec();
+                                                }).populate('professor', 'firstName lastName email')
+                                                  .skip((page -1 ) * limit)
+                                                  .limit(Number(limit))
+                                                  .exec();
 
         return res.status(200).json(
             {
                 success : true,
-                message : 'All Courses.',
-                allCourses,
+                message : 'Courses fetched successfully.',
+                total: allCourses.length,
+                page: Number(page),
+                courses: allCourses,
             }
         )
         
@@ -152,6 +157,7 @@ exports.getAllCourses = async (req, res) => {
             {
                 success : false,
                 message : 'Error While Fetching All Courses, Please try again Later.',
+                error: error.message,
             }
         );
     }

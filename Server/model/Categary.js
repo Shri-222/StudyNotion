@@ -1,29 +1,24 @@
 const mongoose = require('mongoose');
 
-const CategarySchema = new mongoose.Schema({
-
-    name : {
-        type : String,
-        required : true,
+const CategorySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true, // Ensures no leading/trailing spaces
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  courses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course',
+      default: [], // Category can start empty
     },
-
-    discription : {
-        type : String,
-        required : true,
-        trim : true,
-    },
-
-    courses : [
-        {
-            type : mongoose.Schema.Types.ObjectId,
-            ref : 'Course',
-            required : true,
-            trim : true,
-        }
-    ],
-        
-        
+  ],
 });
 
-
-module.exports = mongoose.model('Categary', CategarySchema);
+// Export the model
+module.exports = mongoose.model('Category', CategorySchema);

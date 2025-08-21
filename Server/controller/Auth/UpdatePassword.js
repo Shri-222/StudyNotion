@@ -1,12 +1,3 @@
-// feach the Data from requiest Body
-// get OldPassword NewPassword, Confirm Password
-// validation
-
-// check if old password is correct
-// Update old password to New in DB
-// Send the mail to the User
-// return response
-
 
 const User = require('../../model/User');
 const bcrypt = require('bcrypt');
@@ -31,7 +22,7 @@ exports.updatePassword = async (req, res) => {
         const user = await User.findOne({email});
 
         if ( !user ) {
-            return res.status(401).json(
+            return res.status(404).json(
                 {
                     success : false,
                     message : 'User not found || Email is incorrect',
@@ -53,7 +44,7 @@ exports.updatePassword = async (req, res) => {
 
 
         if ( password !== confirmPassword ) {
-            return res.status(401).json(
+            return res.status(400).json(
                 {
                     success : false,
                     message : 'Passwords do not match',
@@ -67,24 +58,22 @@ exports.updatePassword = async (req, res) => {
 
         await user.save();
         console.log('Updated User After Password Changed', user);
-        
-        
-
-            await mailSender( email, "Successfully Chenged Password", "Your StudyNotion Password has been successfully changed ");
-            
+        try {
+            await mailSender(
+                email,
+                'Password Changed Successfully',
+                'Your StudyNotion password has been successfully updated.'
+            );
+        } catch (err) {
+            console.error('Password updated, but failed to send email:', err.message);
+        }
 
         res.status(200).json(
             {
                 success : true,
                 message : 'Password Changed Successfully',
-                user,
             }
         );
-
-
-
-
-
         
     } catch (error) {
         console.log('Error While Changing Password', error);

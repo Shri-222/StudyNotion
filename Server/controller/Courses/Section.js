@@ -1,15 +1,7 @@
 
-// 1 - create the section 
-
-// i - fetch data from req body 
-// ii - validation
-// iii - create entry in db
-// iv - update or pass the section id in course and poppulate the section and sub-sections
-// v - return response 
-
-
 const Course = require('../../model/Course');
 const Section = require('../../model/Section');
+const mongoose = require('mongoose');
 // const subSection = require('../Courses/subSection');
 
 
@@ -26,11 +18,19 @@ exports.createSection = async (req, res) => {
             });
         }
 
+        const course = await Course.findById(courseID);
+
+        if (!course) {
+        return res.status(404).json({
+            success: false,
+            message: 'Course not found.',
+        });
+        }
 
         const newSection = await Section.create({sectionName});
 
         const updatedCourse = await Course.findByIdAndUpdate( 
-                                                             { courseID },
+                                                              courseID ,
                                                              {
                                                                 $push : 
                                                                     {
@@ -50,7 +50,7 @@ exports.createSection = async (req, res) => {
                                                                         }
                                                                        ).exec();
 
-        res.status(200).json(
+        res.status(201).json(
             {
                 success : true,
                 message : 'Section Created Successfully.',
@@ -71,12 +71,6 @@ exports.createSection = async (req, res) => {
 
 // 2 - Update Section 
 
-// i - fetch data from req body
-// ii - validation 
-// iii - update the section name
-// iv - return respons
-
-
 exports.updateSection = async (req, res) => {
 
     try {
@@ -92,7 +86,14 @@ exports.updateSection = async (req, res) => {
         }
 
 
-        const updatedSection = await Section.findByIdAndUpdate({ sectionID }, { sectionName }, { new : true });
+        const updatedSection = await Section.findByIdAndUpdate(sectionID , { sectionName }, { new : true });
+
+        if (!updatedSection) {
+            return res.status(404).json({
+                success: false,
+                message: 'Section not found.',
+        });
+    }
 
         res.status(200).json(
             {
@@ -103,26 +104,49 @@ exports.updateSection = async (req, res) => {
         );  
         
     } catch (error) {
-
+         console.error('Error updating section:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating section. Please try again later.',
+            error: error.message,
+        });
         
     }
 }
 
 
-
 // 3 - Delete a section
 
-// i - fetch data from req body
-// ii - delete section
-// iii - send response 
 
 exports.deleteSection = async (req, res) => {
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
 
-        const { sectionID } = req.body;
+        const { sectionID , courseID } = req.body;
+
+         if (!sectionID || !courseID) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide sectionID and courseID.',
+            });
+        }
         
-        const deletedSection = await Section.findByIdAndDelete({ sectionID });
+        await Section.findByIdAndDelete(courseID, { $pull : { section : sectionID } } , { session });
+
+        const deletedSection = await Section.findByIdAndDelete(sectionID, { session });
+
+        if (!deletedSection) {
+            await session.abortTransaction();
+            return res.status(404).json({
+                success: false,
+                message: 'Section not found.',
+            });
+        }
+
+         await session.commitTransaction();
 
         res.status(200).json(
             {
@@ -132,11 +156,14 @@ exports.deleteSection = async (req, res) => {
         );
         
     } catch (error) {
+        await session.abortTransaction();
 
         console.log('Error While Deleting a Section', error);
         return res.status(500).json({
             success : false,
             message : 'Error While Deliting a Section, Please try again Later.',
         });
-    }
+    } finally {
+        session.endSession();
+  }
 }

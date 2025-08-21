@@ -1,10 +1,3 @@
-//fetch the data from request body
-// validation 
-// check if user is not signed in
-// check password or compair password
-// Genarate JWT Token
-// Genarate Cookies
-// return response
 
 const User = require('../../model/User');
 const bcrypt = require('bcrypt');
@@ -19,38 +12,45 @@ exports.login = async (req, res) => {
             const {email, password} = req.body;
 
             if (!email || !password) {
-                return res.status(403).json (
+                return res.status(400).json (
                     {
                         success : false,
-                        massege : 'Please enter all the required fields'
+                        massage : 'Please enter all the required fields'
                     }
                 )
             }
 
-            const user = await User.findOne({email});
-
-            console.log('This is a new user ID :-', user._id);
+            const user = await User.findOne({email}).select('+password');
 
             if (!user) {
-                return res.status(404).json(
+                return res.status(401).json(
                     {
                         success : false,
-                        massege : 'User is Not Registrered, Please Sign in First!',
+                        massage : 'Invalid email or password.',
                     }
                 );
             }
 
-            console.log(" JWT Secret :- ", process.env.JET_SECRET);
+            console.log('This is a new user ID :-', user._id);
+
+
+            console.log(" JWT Secret :- ", process.env.JWT_SECRET);
 
             if (await bcrypt.compare(password, user.password)) {
 
-                const plyload = {
+                const payload = {
                     email : user.email,
                     Id : user._id,
                     accountType : user.accountType, 
                 }
+<<<<<<< HEAD
                 const token = jwt.sign(plyload, process.env.JET_SECRET || 'BARSERK', {
                         expiresIn : '999h',
+=======
+
+                const token = jwt.sign(payload, process.env.JWT_SECRET || 'BARSERK', {
+                        expiresIn : '24h',
+>>>>>>> recovery-backup
 
                 });
 
@@ -58,14 +58,16 @@ exports.login = async (req, res) => {
                 user.password = undefined;
 
                 const option = {
-                    expires : new Date(Date.now() + 3*24*60*60*1000),
                     httpOnly : true,
+                    secure : process.env.NODE_ENV === 'production' ? true : false,
+                    sameSite : 'strict',
+                    maxAge : 3 * 24 * 60 * 60 * 1000 // 3 days 
                 }
 
                 res.cookie('token', token, option).status(200).json(
                     {
                         success : true,
-                        massege : 'User Logged In successfully',
+                        message : 'User Logged In successfully',
                         Token : token,
                         Data : user,
                     }

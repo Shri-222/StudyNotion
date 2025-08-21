@@ -1,18 +1,17 @@
-
-
 const express = require('express');
 const router = express.Router();
 
-const  Profile  = require('../controller/Profile/Profile');
-const  forgetPassword = require('../controller/ResetPasWord/ForgetPassword');
+const Profile = require('../controller/Profile/Profile');
+const forgetPassword = require('../controller/ResetPasWord/ForgetPassword');
 const Auth = require('../middleware/auth');
 
-router.put('/updateProfile', Profile.updateProfile);
-router.get('/showProfileDetails', Profile.getAllUserDetails);
-router.delete('/deleteProfile', Profile.deleteProfile);
+// Profile Routes - Must be authenticated
+router.put('/updateProfile', Auth.auth, Profile.updateProfile);
+router.get('/profileDetails', Auth.auth, Profile.getAllUserDetails);
+router.delete('/deleteProfile', Auth.auth, Profile.deleteProfile);
 
-router.post('/forgetpasswordToken', Auth.auth, forgetPassword.forgetPasswordToken);
-router.post('/forgetPassword', Auth.auth, forgetPassword.forgetPassword);
-
+// Forgot Password Routes - Do NOT require authentication
+router.post('/forgot-password-token', forgetPassword.forgetPasswordToken);
+router.post('/reset-password', forgetPassword.forgetPassword);
 
 module.exports = router;

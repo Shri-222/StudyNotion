@@ -1,82 +1,74 @@
 const mongoose = require('mongoose');
 
-const courseSchemas = new mongoose.Schema ({
+const courseSchema = new mongoose.Schema({
+  courseName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
 
-    courseName : {
-        type : String,
-        required : true,
-        trim : true,
+  courseDescription: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  professor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',  // Assuming professors are also Users
+    required: true,
+  },
+
+  whatYouWillLearn: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  courseContent: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Section',
+      default: [], // starts empty
     },
+  ],
 
-    courseDiscription : {
-        type : String,
-        required : true,
-        trim : true,
+  ratingAndReview: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'RatingAndReview',
+      default: [],
     },
+  ],
 
-    professor : {
-        type : mongoose.Schema.Types.ObjectId,
-        required : true,
-        trim : true,
+  price: {
+    type: Number,
+    required: true,
+  },
+
+  thumbnail: {
+    type: String,
+    required: true,
+  },
+
+  tags: {
+    type: [String], // Make it an array for multiple tags
+    default: [],
+  },
+
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',  
+    required: true,
+  },
+
+  studentEnroll: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: [],
     },
+  ],
+}, { timestamps: true }); 
 
-    whatYouWillLearn : {
-        type : String,
-        required : true,
-        trim : true,
-    },
-    
-    courseContent : [
-        {
-            type : mongoose.Schema.Types.ObjectId,
-            ref : 'Section',
-            required : true,
-            trim : true,
-        }
-    ],
-
-    ratingAcndRewivw : [
-        {
-            type : mongoose.Schema.Types.ObjectId,
-            ref : 'RatingAndRewive',
-            required : true,
-            trim : true,
-        }
-    ],
-
-    price : {
-        type : Number,
-        required : true,
-        trim : true,
-    },
-
-    thumbnail : {
-        type : String,
-        required : true,
-    },
-
-    Tags : {
-        type : String,
-        required : true,
-        trim : true,
-    },
-
-    Categary : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : 'Categary',
-        required : true,
-        trim : true,
-    },
-
-    studentEnroll : [
-        {
-            type : mongoose.Schema.Types.ObjectId,
-            ref : 'User',
-            required : true,
-        }
-    ],
-
-});
-
-
-module.exports = mongoose.model('Course', courseSchemas);
+module.exports = mongoose.model('Course', courseSchema);

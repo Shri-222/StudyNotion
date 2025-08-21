@@ -1,17 +1,11 @@
 
 // 1 - update the Profile Details becausewe create the frofile in signup section
 
-// fetch the data from req body
-// fetch user id from req.user we created plylode in login
-// find user details
-// find profile 
-// update profile
-// return respons
-
 const User = require('../../model/User');
 const Profile = require('../../model/Profile');
 const Course = require('../../model/Course');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 exports.updateProfile = async (req, res) => {
@@ -20,20 +14,25 @@ exports.updateProfile = async (req, res) => {
 
         const { gender, dateOfBirth, contactNumber, about } = req.body;
 
-        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-        const userID = plyload.Id;
+        const payload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userID = payload.id;
 
-        console.log('This is UserID', userID);
+        const userDetails = await User.findById( userID); 
 
-        const userDetails = await User.findById( {_id : userID}); 
+        if (!userDetails) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
 
         const profileDetails = await Profile.findById(userDetails.additionalDetails);
 
+         if (!profileDetails) {
+            return res.status(404).json({ success: false, message: 'Profile not found.' });
+        }
 
-        profileDetails.gender = gender;
-        profileDetails.dateOfBirth = dateOfBirth;
-        profileDetails.contactNumber = contactNumber;
-        profileDetails.about = about;
+        profileDetails.gender = gender || profileDetails.gender;
+        profileDetails.dateOfBirth = dateOfBirth || profileDetails.dateOfBirth;
+        profileDetails.contactNumber = contactNumber || profileDetails.contactNumber;
+        profileDetails.about = about || profileDetails.about;
 
         await profileDetails.save();
 
@@ -57,24 +56,20 @@ exports.updateProfile = async (req, res) => {
     }
 }
 
-
-
 // 2 - Delete Profile
-
-// Get id waya playlode
-// validation
-// Delete the student from all the courses he enroled
-// delete first additional details
-// delete the profile
-// return response
-
 
 exports.deleteProfile = async ( req, res ) => {
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
 
-        const ID = req.user.id;
+        const userid = req.user.id;
 
+        if (!userid) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
         const userDetails = await User.findById(ID);
 
         if ( !userDetails ) {
@@ -87,9 +82,21 @@ exports.deleteProfile = async ( req, res ) => {
             );
         }
 
-        await Profile.findByIdAndDelete({_id : userDetails.additionalDetails});
+        
+        // Remove user from all enrolled courses
+        await Course.updateMany(
+                                { studentEnroll: userid },
+                                { $pull: { studentEnroll: userid } },
+                                { session }
+        );
 
-        await User.findByIdAndDelete({_id : ID});
+
+        await Profile.findByIdAndDelete( userDetails.additionalDetails , { session });
+
+        await User.findByIdAndDelete( userid, { session });
+
+        await session.commitTransaction();
+        session.endSession();
         
         res.status(200).json(
             {
@@ -97,37 +104,30 @@ exports.deleteProfile = async ( req, res ) => {
                 massage : 'Profile Deleted Successfully',
             }
         );
-
-        // const studID = mongoose.Schema.Types.ObjectId(ID);
-        // const studentEnroll = await Course.studentEnroll.findByIdAndDelete({_id : studID});
         
     } catch (error) {
-        
+        await session.abortTransaction();
+        session.endSession();
+        console.error('Error deleting profile:', error);
+        return res.status(500).json({ success: false, message: 'Error deleting profile.' });
     }
 }
 
-
-
 // 3 - Get All Users Details
-
-// get id from users playlod
-// validation and find user details
-// retuen respons
 
 exports.getAllUserDetails = async ( req, res ) => {
 
     try {
 
-        const plyload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-        const userID = plyload.Id;
+        const payload =  jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const userID = payload.id;
 
-        console.log(userID)
+        // console.log(userID)
 
-        const profile = await User.findById(userID).populate('additionalDetails').exec();
-        console.log(profile)
+        const user = await User.findById(userID).populate('additionalDetails').exec();
+        // console.log(profile)
 
-        if (!profile ) {
-            
+        if (!user ) {
             return res.status(401).json(
                 {
                     success : false,
@@ -141,7 +141,7 @@ exports.getAllUserDetails = async ( req, res ) => {
             {
                 success : true,
                 massage : 'User Details',
-                data : profile,
+                data : user,
             }
         );
         
