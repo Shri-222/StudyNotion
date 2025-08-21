@@ -1,42 +1,37 @@
-// this is for sending the mail for varification to the users
-
-const nodemailer = require('nodemailer')
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+const mailSender = async (email, title, body) => {
 
-const mailSender = async (email , title, body) => {
-    try {
-        let transport = nodemailer.createTransport(
-            {
-                host : process.env.MAIL_HOST,
-                auth : {
-                    user : process.env.MAIL_USER,
-                    pass : process.env.MAIL_PASS
-                }
-            }
-        )
+  if (process.env.NODE_ENV === 'test') {
+    return { success: true }; // Skip real email
+  }
 
-        let info = await transport.sendMail(
-            {
-                from : 'StudyNotion',
-                to :    `${email}`,
-                subject : `${title}`,
-                html : `${body}`
-            }
-        )
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.MAIL_HOST,
+      port: 465, // or 587 depending on your provider
+      secure: true, // true for port 465, false for 587
+      service : "gmail", // Use 'gmail' or your email provider
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS
+      }
+    });
 
-        console.log(info);
-        
-    }
-    catch ( error ) {
-        console.log ("Error occured While Sending Mail");
-        console.error(error);
-        return res.status(401).json({
-            success : false,
-            massage : 'Error while sending mail'
-        })
-    }
+    const info = await transporter.sendMail({
+      from: `"StudyNotion" <${process.env.MAIL_USER}>`, // Proper sender
+      to: email,
+      subject: title,
+      html: body
+    });
+
+    console.log("Email sent successfully:", info.messageId);
+    return info;
+  } catch (error) {
+    console.error("Error occurred while sending mail:", error.message);
+    throw new Error("Failed to send email");
+  }
 };
-
 
 module.exports = mailSender;

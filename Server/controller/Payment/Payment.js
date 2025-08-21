@@ -3,7 +3,7 @@ const User = require('../../model/User');
 const Course = require('../../model/Course');
 const { instance } = require('../../config/razorPay');
 const MailSender = require('../../utils/MailSender');
-const { default: mongoose } = require('mongoose');
+const mongoose  = require('mongoose');
 const crypto = require('crypto');
 
 // 1 - create or capture the payment order
@@ -27,26 +27,23 @@ exports.capturePaymentOrder = async (req, res) => {
 
         // validetion of courseID
 
-        const user = await User.findById({userID});
-        const course = await Course.findById({courseID});
+        const user = await User.findById(userID);
+        const course = await Course.findById(courseID);
         
         // validetion of courseDetails or course info
 
-        if( !course ) {
+        if( !course || !user ) {
             return res.status(404).json(
                 {
                     success : false,
-                    message : 'Course Not Found.',
+                    message : 'User or Course Not Found.',
                 }
             );
         }
         
         // validation if user is alredy parcheses or enrolled this course
-        
-        // const uId = new mongoose.Types.ObjectId(userID);
-        // const isEnrolled = user.courses.includes(courseID);
 
-        if( user.courses.includes(courseID) ) {
+        if( user.courses.some(c => c.toString() === courseID) ) {
             return res.status(400).json(
                 {
                     success : false,
@@ -57,25 +54,22 @@ exports.capturePaymentOrder = async (req, res) => {
 
         // then create order - create options - initilize the payment using razorPay - return response
 
-        const amount = course.price;
-        const currency = 'INR'
-
         const options = {
-            amount : amount * 100,
-            currency : currency,
+            amount : course.price * 100,
+            currency : 'INR',
             description : `Payment for Course - ${course.courseName}`,
-            receipt : Math.random(Date.now()).toString(),
+            receipt : `rcpt_${date.now()}`,
             payment_capture : true,
             notes : {
-                courseID : courseID,
-                userID : userID
+                courseID,
+                userID
             }
         }
 
         try {
 
             const paymentResponse = await instance.orders.create(options);
-            console.log(paymentResponse);
+            // console.log(paymentResponse);
 
             return res.status(200).json(
                 {
@@ -121,9 +115,9 @@ exports.verifyPaymentOrder = async (req, res) => {
 
     const webhooksecret = process.env.WEBHOOK_SECRET ;
 
-    const signature = req.header['x-razorpay-signature'];
+    const signature = req.headers['x-razorpay-signature'];
 
-    const shasum = crypto.createHmac('sha1', webhooksecret);
+    const shasum = crypto.createHmac('sha256', webhooksecret);
     shasum.update(JSON.stringify(req.body));
     const computedSignature = shasum.digest('hex');
     
@@ -133,14 +127,17 @@ exports.verifyPaymentOrder = async (req, res) => {
 
         const { courseID, userID } = req.body.payload.payment.entity.notes;
         
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
         try {
              const courseEnroll = await Course.findByIdAndUpdate(
-                                                                    { _id : courseID },
-                                                                    { $push : { studentEnroll : userID } },
-                                                                    { new : true }
+                                                                    courseID ,
+                                                                    { $addToSet : { studentEnroll : userID } },
+                                                                    { new : true, session }
                                                                     );
                 
-                console.log(courseEnroll);
+                // console.log(courseEnroll);
 
                 if( !courseEnroll ) {
                     return res.status(404).json(
@@ -168,24 +165,30 @@ exports.verifyPaymentOrder = async (req, res) => {
                     );
                 }
 
+                await session.commitTransaction();
+                session.endSession();
+
                 const emailSender = await MailSender(
                                                         userEnroll.email,
                                                         'Course Enrollment Confirmation',
                                                         `You have successfully enrolled in the course - ${courseEnroll.courseName}`
                                                     );
 
-                console.log(emailSender);
+                // console.log(emailSender);
+                
                 return res.status(200).json(
                     {
                         success : true,
-                        message : 'Payment is Successful.',
+                        message : 'Payment verified and enrollment successful.',
                         courseName : courseEnroll.courseName,
                         courseDescription : courseEnroll.courseDiscription,
                         courseThumbnel : courseEnroll.thumbnail,
                     }
                 )
         } catch (error) {
-                
+             await session.abortTransaction();
+            session.endSession();   
+            
             console.log('Error While Verifying Payment', error);
             return res.status(500).json(
                 {

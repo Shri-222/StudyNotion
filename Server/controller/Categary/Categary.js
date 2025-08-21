@@ -1,7 +1,4 @@
-// feach data 
-// validation
-// save into DB
-// return respons
+
 
 const Categary = require('../../model/Categary');
 
@@ -9,10 +6,10 @@ exports.createCategary = async (req, res) => {
 
     try {
 
-        const { name, Description } =  req.body;
+        const { name, description } =  req.body;
 
-        if ( !name || !Description ) {
-            return res.status(404).json(
+        if ( !name || !description ) {
+            return res.status(400).json(
                 {
                     success : false,
                     message : 'Name and Description are required.'
@@ -20,27 +17,31 @@ exports.createCategary = async (req, res) => {
             );
         } 
         
-        const newTags = await Categary.create(
+        const newCategory = await Categary.create(
             {
-                Name : name,
-                Discription : Description,
+                name : name,
+                description
             }
         );
 
-        console.log(newTags);
+        console.log(newCategory);
 
 
         res.status(200).json(
             {
                 success : true,
-                message : 'Tag Created Successfully.',
-                newTags,
+                message: 'Category created successfully.',
+                category: newCategory,
             }
         );
             
 
     } catch (error) {
-       
+            console.error('Error while creating category:', error);
+            res.status(500).json({
+            success: false,
+            message: 'Server error while creating category.',
+        });
     }
 }
 
@@ -50,7 +51,7 @@ exports.getAllCategary = async (req, res) => {
 
     try {
 
-        const allTags = await Categary.find({}, {name : true, Discription : true});
+        const allCategories  = await Categary.find({}, {name : 1, Discription : 1});
 
         // console.log(allTags);
 
@@ -59,15 +60,15 @@ exports.getAllCategary = async (req, res) => {
             {
                 success : true,
                 message : 'All Tags.',
-                allTags,
+                allCategories : allCategories,
             }
         );
         
     } catch (error) {
-        console.log('Error While Fetching All Tag');
+        console.log('Error While Fetching All Categories');
         return res.status(500).json({
             success : false,
-            message : 'Error While Fetching All Tag, Please try again Later.',
+            message : 'Error While Fetching All Categories, Please try again Later.',
         });
     }
 }
@@ -80,10 +81,18 @@ exports.categaryPage = async (req, res) => {
     try {
 
         // fetch catagary Id 
-            const catagaryId = req.body;
+            const { catagaryId } = req.body;
+
+            if (!catagaryId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Category ID is required.',
+            });
+    }
 
         // find the data or courses by category id
             const catagaryDetails = await Categary.findById(catagaryId).populate('courses').exec();
+            console.log(catagaryDetails);
 
         // validate the data
             if( !catagaryDetails ) {

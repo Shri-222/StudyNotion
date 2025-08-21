@@ -1,17 +1,25 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
 
+require('dotenv').config({
+    path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env'
+});
 
-exports.connect = () => {
-    mongoose.connect(process.env.MONGOODB_URL, {
-          useNewUrlParser : true,
-          useUnifiedTopology : true,
-    })
+const MONGODB_URL = process.env.MONGODB_URL;
 
-    .then(() => console.log("Databse Connected Successfully"))
-    .catch((error) => {
-        console.log("Error While Connecting to DataBase");
-        console.error(error);
+exports.connect = async () => {
+    
+    // Skip real DB connection when running tests
+     if (process.env.NODE_ENV === 'test') {
+        console.log('Skipping real MongoDB connection for tests');
+        return;
+    } 
+
+    try {
+        await mongoose.connect(MONGODB_URL);
+
+        console.log('✅ MongoDB connected');
+    } catch (error) {
+        console.error('❌ MongoDB connection error:', error);
         process.exit(1);
-    })
+    }
 };
