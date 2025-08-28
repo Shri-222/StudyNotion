@@ -39,7 +39,7 @@ app.use(fileUpload({
 }));
 
 // Routes
-app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/auth', userRoutes);
 app.use('/api/v1/profile', profileRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/payment', paymentRoutes);

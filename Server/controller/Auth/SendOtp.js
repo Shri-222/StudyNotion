@@ -2,7 +2,8 @@
 const User = require('../../model/User');
 const OTP = require('../../model/OTP');
 const GenerateOtp = require('otp-generator')
-
+const bcrypt = require('bcrypt');
+const {sendVerificationMail} = require('../../model/OTP');
 
 exports.SendOtp = async (req, res) => {
 
@@ -27,10 +28,14 @@ exports.SendOtp = async (req, res) => {
 
         console.log('OTP :- ', otp);
 
-        const OtpPayload = {email , otp};
+        const hashedOtp = await bcrypt.hash(otp.toString(), 10)
+
+        const OtpPayload = {email , otp : hashedOtp};
 
         const otpBody = await OTP.create(OtpPayload);
         console.log('otp save in DB ', otpBody);
+
+        await sendVerificationMail(email, otp);
 
         res.status(200).json({
             success : true,

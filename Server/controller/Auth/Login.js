@@ -43,14 +43,9 @@ exports.login = async (req, res) => {
                     Id : user._id,
                     accountType : user.accountType, 
                 }
-<<<<<<< HEAD
-                const token = jwt.sign(plyload, process.env.JET_SECRET || 'BARSERK', {
-                        expiresIn : '999h',
-=======
 
                 const token = jwt.sign(payload, process.env.JWT_SECRET || 'BARSERK', {
                         expiresIn : '24h',
->>>>>>> recovery-backup
 
                 });
 
