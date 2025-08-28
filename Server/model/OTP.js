@@ -22,7 +22,7 @@ const otpSchema = new mongoose.Schema({
 });
 
 // Send verification email
-async function sendVerificationMail(email, otp) {
+exports.sendVerificationMail = async (email, otp) => {
   try {
     const mailResponse = await mailSender(
       email,
@@ -36,18 +36,19 @@ async function sendVerificationMail(email, otp) {
   }
 }
 
-// Pre-save hook to hash OTP & send mail
-otpSchema.pre('save', async function (next) {
-  // Hash OTP for security
-  const salt = await bcrypt.genSalt(10);
-  this.otp = await bcrypt.hash(this.otp, salt);
+// // Pre-save hook to hash OTP & send mail
+// otpSchema.pre('save', async function (next) {
+//   // Hash OTP for security
+//   // const salt = await bcrypt.genSalt(10);
+//   // this.otp = await bcrypt.hash(this.otp, salt);
 
-  // Send email only for *new* OTPs, not for updates
-  if (this.isNew) {
-    await sendVerificationMail(this.email, this.otp);
-  }
+//   // Send email only for *new* OTPs, not for updates
+//   if (this.isNew) {
+//     await sendVerificationMail(this.email, this.otp);
+//   }
 
-  next();
-});
+//   next();
+// });
 
 module.exports = mongoose.model('OTP', otpSchema);
+// exports.sendVerificationMail = sendVerificationMail;

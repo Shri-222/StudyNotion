@@ -31,11 +31,7 @@ exports.forgetPasswordToken = async (req, res) => {
         // console.log("this is Token " ,  token);
 
         const updatedDetails = await User.findOneAndUpdate(
-<<<<<<< HEAD
-            { email : email },
-=======
             { email },
->>>>>>> recovery-backup
             { 
                 changePasswordToken: token, 
                 changePasswordExpires: Date.now() + 10 * 60 * 1000      // 10 minutes
@@ -122,11 +118,7 @@ exports.forgetPassword = async (req, res) => {
 
 
         const userDetails = await User.findOne({changePasswordToken : token});
-<<<<<<< HEAD
-        console.log("this is user Detais :-", userDetails)
-=======
         // console.log("this is user Details :-", userDetails)
->>>>>>> recovery-backup
 
         if ( !userDetails ) {
             return res.status(400).json(
@@ -147,15 +139,6 @@ exports.forgetPassword = async (req, res) => {
         }
 
 
-<<<<<<< HEAD
-        const hashPassword = await bcrypt.hash(password, 10); 
-
-        const updatedUser = await User.findOneAndUpdate(
-            { changePasswordToken : token },
-            { password : hashPassword },
-            { new : true },
-        );
-=======
         const hashedPassword = await bcrypt.hash(password, 10); 
 
         console.log("this is hashed Password :-", hashedPassword);
@@ -164,7 +147,6 @@ exports.forgetPassword = async (req, res) => {
         userDetails.changePasswordToken = null;
         userDetails.changePasswordExpires = null;
         await userDetails.save();
->>>>>>> recovery-backup
 
 
         await mailSender(
@@ -178,11 +160,7 @@ exports.forgetPassword = async (req, res) => {
             {
                 success : true,
                 message : 'Password has been successfully changed',
-<<<<<<< HEAD
-                data : updatedUser
-=======
                 // data : updatedUser
->>>>>>> recovery-backup
             }
         );
 
